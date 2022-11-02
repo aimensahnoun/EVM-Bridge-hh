@@ -112,4 +112,14 @@ contract Bridge is AccessControl {
     function removeRelayer(address _relayer) external onlyAllowed {
         revokeRole(RELAYER, _relayer);
     }
+
+    function extractTokens(address _tokenAddress, address _to)
+        external
+        onlyAllowed
+    {
+        IERC20(_tokenAddress).transfer(
+            _to,
+            IERC20(_tokenAddress).balanceOf(address(this))
+        );
+    }
 }
