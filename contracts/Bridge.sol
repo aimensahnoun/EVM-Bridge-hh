@@ -12,6 +12,7 @@ contract Bridge is AccessControl {
 
     event TransferInitiated(
         address indexed user,
+        address tokenAddress,
         uint256 sourceChainId,
         uint256 amount,
         uint256 indexed targetChainId,
@@ -21,6 +22,7 @@ contract Bridge is AccessControl {
 
     event TransferCompleted(
         address indexed user,
+        address tokenAddress,
         uint256 amount,
         uint256 indexed chainId,
         string indexed tokenSymbol,
@@ -44,14 +46,14 @@ contract Bridge is AccessControl {
     }
 
     modifier onlyAllowed() {
-        if (
-            !hasRole(RELAYER, msg.sender)
-        ) revert Bridge__NotAllowedToDoThisAction();
+        if (!hasRole(RELAYER, msg.sender))
+            revert Bridge__NotAllowedToDoThisAction();
         _;
     }
 
     function initiateTransfer(
         address _user,
+        address _tokenAddress,
         uint256 _targetChainId,
         uint256 _amount,
         string memory _tokenName,
@@ -70,6 +72,7 @@ contract Bridge is AccessControl {
 
         emit TransferInitiated(
             _user,
+            _tokenAddress,
             block.chainid,
             _targetChainId,
             _amount,
@@ -94,6 +97,7 @@ contract Bridge is AccessControl {
 
         emit TransferCompleted(
             _to,
+            werc20,
             _amount,
             block.chainid,
             tokenSymbol,
