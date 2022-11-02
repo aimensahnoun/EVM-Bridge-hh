@@ -10,6 +10,11 @@ contract Bridge is AccessControl {
     WERC20Factory public factory;
     bytes32 public constant RELAYER = keccak256("RELAYER");
 
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        factory = new WERC20Factory();
+    }
+
     event TransferInitiated(
         address indexed user,
         address tokenAddress,
@@ -39,11 +44,6 @@ contract Bridge is AccessControl {
     }
 
     mapping(address => Transaction[]) transactions;
-
-    constructor() {
-        _grantRole(RELAYER, msg.sender);
-        factory = new WERC20Factory();
-    }
 
     modifier onlyAllowed() {
         if (!hasRole(RELAYER, msg.sender))
@@ -113,7 +113,7 @@ contract Bridge is AccessControl {
         revokeRole(RELAYER, _relayer);
     }
 
-    function extractTokens(address _tokenAddress, address _to)
+    function withdrawToken(address _tokenAddress, address _to)
         external
         onlyAllowed
     {
