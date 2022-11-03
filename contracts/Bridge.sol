@@ -58,7 +58,7 @@ contract Bridge is AccessControl {
         uint256 _amount,
         string memory _tokenName,
         string memory _tokenSymbol
-    ) external onlyAllowed {
+    ) external {
         transactions[_user].push(
             Transaction(
                 _user,
