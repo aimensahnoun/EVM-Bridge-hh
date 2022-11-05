@@ -59,6 +59,7 @@ contract WERC20Factory is Ownable {
             revert WERC20Factory__TokenAlreadyExists(_symbol);
         address werc20 = address(new WrapperToken(_name, _symbol));
         werc20s[_symbol] = werc20;
+        emit NewWERC20(werc20, _name, _symbol);
         return werc20;
     }
 

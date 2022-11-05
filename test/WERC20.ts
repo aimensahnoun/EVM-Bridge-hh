@@ -1,12 +1,13 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
 
 import { WrapperToken } from "../typechain";
 
 describe("Testing Wrapper ERC20 Contract", function () {
   let wrapperToken: WrapperToken;
   let accounts: SignerWithAddress[] = [];
+  hre.run("compile");
 
   beforeEach(async function () {
     accounts = await ethers.getSigners();
