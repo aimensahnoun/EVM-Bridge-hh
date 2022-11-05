@@ -57,6 +57,8 @@ contract Bridge is AccessControl {
         uint256 indexed chainId
     );
 
+    event WithdrawToken(address indexed tokenAddress, address indexed to);
+
     mapping(address => address) public nativeToWrapped;
     mapping(address => address) public wrappedToNative;
 
@@ -157,14 +159,14 @@ contract Bridge is AccessControl {
             revert Bridge__TokenSymbolEmpty();
         }
 
-        uint256 userBalance = factory.balanceOf(_symbol, msg.sender);
-        if (userBalance < _amount) {
-            revert Bridge__InsufficientBalance();
-        }
-
         address werc20 = factory.getWERC20(_symbol);
         if (werc20 == address(0)) {
             revert Bridge__WrapTokenDoesNotExist();
+        }
+
+        uint256 userBalance = factory.balanceOf(_symbol, msg.sender);
+        if (userBalance < _amount) {
+            revert Bridge__InsufficientBalance();
         }
 
         factory.burn(werc20, _user, _amount);
@@ -180,6 +182,7 @@ contract Bridge is AccessControl {
         external
         onlyValidAddress(_to)
         onlyValidAddress(_tokenAddress)
+        onlyValidAmount(_amount)
         onlyAllowed
     {
         address nativeToken = wrappedToNative[_tokenAddress];
@@ -210,5 +213,7 @@ contract Bridge is AccessControl {
             _to,
             IERC20(_tokenAddress).balanceOf(address(this))
         );
+
+        emit WithdrawToken(_tokenAddress, _to);
     }
 }
