@@ -1,15 +1,12 @@
 import { ethers } from "hardhat";
 
 async function main() {
+  const BridgeFactory = await ethers.getContractFactory("Bridge");
+  const Bridge = await BridgeFactory.deploy();
 
+  await Bridge.deployed();
 
-  const ERC20Factory = await ethers.getContractFactory("Bridge");
-  const ERC20 = await ERC20Factory.deploy();
-
-  await ERC20.deployed();
-
-  console.log("WERC20Factory deployed to:", ERC20.address);
-
+  console.log("Bridge deployed to:", Bridge.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

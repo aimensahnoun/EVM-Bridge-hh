@@ -12,8 +12,79 @@ const BridgeContractABI = [
   },
   {
     inputs: [],
+    name: "Bridge__FundsCannotBeZero",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__InsufficientBalance",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "Bridge__NotAllowedToDoThisAction",
     type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__TokenNameEmpty",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__TokenSymbolEmpty",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__TransferToBridgeFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__UnwrappingFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__WrapTokenDoesNotExist",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Bridge__ZeroAddressProvided",
+    type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "tokenAddress",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "chainId",
+        type: "uint256",
+      },
+    ],
+    name: "BurnedToken",
+    type: "event",
   },
   {
     anonymous: false,
@@ -183,6 +254,62 @@ const BridgeContractABI = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "nativeTokenAddress",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "werc20Address",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "chainId",
+        type: "uint256",
+      },
+    ],
+    name: "UwrappedToken",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "tokenAddress",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "to",
+        type: "address",
+      },
+    ],
+    name: "WithdrawToken",
+    type: "event",
+  },
+  {
     inputs: [],
     name: "DEFAULT_ADMIN_ROLE",
     outputs: [
@@ -211,12 +338,22 @@ const BridgeContractABI = [
   {
     inputs: [
       {
+        internalType: "string",
+        name: "_symbol",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+      {
         internalType: "address",
-        name: "_relayer",
+        name: "_user",
         type: "address",
       },
     ],
-    name: "addRelayer",
+    name: "burnWrappedToken",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -351,6 +488,11 @@ const BridgeContractABI = [
         type: "address",
       },
       {
+        internalType: "address",
+        name: "_tokenAddress",
+        type: "address",
+      },
+      {
         internalType: "uint256",
         name: "_amount",
         type: "uint256",
@@ -365,13 +507,19 @@ const BridgeContractABI = [
     inputs: [
       {
         internalType: "address",
-        name: "_relayer",
+        name: "",
         type: "address",
       },
     ],
-    name: "removeRelayer",
-    outputs: [],
-    stateMutability: "nonpayable",
+    name: "nativeToWrapped",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -433,6 +581,29 @@ const BridgeContractABI = [
     inputs: [
       {
         internalType: "address",
+        name: "_to",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_tokenAddress",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+    ],
+    name: "unWrapToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "_tokenAddress",
         type: "address",
       },
@@ -447,11 +618,48 @@ const BridgeContractABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "wrappedToNative",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
 ];
+
 // Entrypoint for the Autotask
 exports.handler = async function (event) {
   // Load value provided in the webhook payload (not available in schedule or sentinel invocations)
-  const { symbol, tokenName, to, amount, contractAddress } = event.request.body;
+  const {
+    symbol,
+    tokenName,
+    to,
+    amount,
+    tokenAddress,
+    contractAddress,
+    type,
+    secret,
+  } = event.request.body;
+  const { HOOKSECRET } = event.secrets;
+
+  if (secret !== HOOKSECRET) {
+    return {
+      statusCode: 401,
+      body: "Unauthorized",
+    };
+  }
 
   // Initialize defender relayer provider and signer
   const provider = new DefenderRelayProvider(event);
@@ -464,11 +672,17 @@ exports.handler = async function (event) {
     signer
   );
 
-  const mintTx = await contract.mintToken(symbol, tokenName, to, amount);
+  let tx;
 
-  await mintTx.wait();
+  if (type === "mint") {
+    tx = await contract.mintToken(symbol, tokenName, to, amount);
 
-  console.log(" Tx Hash: ", mintTx.hash);
+    await tx.wait();
+  } else {
+    tx = await contract.unWrapToken(to, tokenAddress, amount);
+    await tx.wait();
+  }
+  console.log(" Tx Hash: ", tx.hash);
 
-  return { tx: mintTx.hash };
+  return { tx: tx.hash };
 };
