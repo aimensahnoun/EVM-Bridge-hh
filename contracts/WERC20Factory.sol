@@ -58,6 +58,16 @@ contract WERC20Factory is Ownable {
         return WrapperToken(werc20).balanceOf(_account);
     }
 
+    // Burn function
+    function burn(
+        address _tokenAddress,
+        address _from,
+        uint256 _amount
+    ) external onlyOwner returns (bool) {
+        WrapperToken(_tokenAddress).burnFrom(_from, _amount);
+        return true;
+    }
+
     // Get My balance
     function myBalanceOf(string memory _symbol)
         external

@@ -5,6 +5,14 @@ import "./WERC20Factory.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 error Bridge__NotAllowedToDoThisAction();
+error Bridge__TransferToBridgeFailed();
+error Bridge__ZeroAddressProvided();
+error Bridge__FundsCannotBeZero();
+error Bridge__TokenNameEmpty();
+error Bridge__TokenSymbolEmpty();
+error Bridge__WrapTokenDoesNotExist();
+error Bridge__InsufficientBalance();
+error Bridge__UnwrappingFailed();
 
 contract Bridge is AccessControl {
     WERC20Factory public factory;
@@ -34,20 +42,37 @@ contract Bridge is AccessControl {
         string tokenName
     );
 
-    struct Transaction {
-        address user;
-        uint256 sourceChainId;
-        uint256 targetChainId;
-        uint256 amount;
-        string tokenName;
-        string tokenSymbol;
-    }
+    event BurnedToken(
+        address indexed user,
+        address tokenAddress,
+        uint256 amount,
+        uint256 indexed chainId
+    );
 
-    mapping(address => Transaction[]) transactions;
+    event UwrappedToken(
+        address indexed user,
+        address nativeTokenAddress,
+        address werc20Address,
+        uint256 amount,
+        uint256 indexed chainId
+    );
+
+    mapping(address => address) public nativeToWrapped;
+    mapping(address => address) public wrappedToNative;
 
     modifier onlyAllowed() {
         if (!hasRole(RELAYER, msg.sender))
             revert Bridge__NotAllowedToDoThisAction();
+        _;
+    }
+
+    modifier onlyValidAddress(address _address) {
+        if (_address == address(0)) revert Bridge__ZeroAddressProvided();
+        _;
+    }
+
+    modifier onlyValidAmount(uint256 _amount) {
+        if (_amount == 0) revert Bridge__FundsCannotBeZero();
         _;
     }
 
@@ -58,17 +83,18 @@ contract Bridge is AccessControl {
         uint256 _amount,
         string memory _tokenName,
         string memory _tokenSymbol
-    ) external {
-        transactions[_user].push(
-            Transaction(
-                _user,
-                block.chainid,
-                _targetChainId,
-                _amount,
-                _tokenName,
-                _tokenSymbol
-            )
+    )
+        external
+        onlyValidAddress(_user)
+        onlyValidAddress(_tokenAddress)
+        onlyValidAmount(_amount)
+    {
+        bool result = IERC20(_tokenAddress).transferFrom(
+            _user,
+            address(this),
+            _amount
         );
+        if (!result) revert Bridge__TransferToBridgeFailed();
 
         emit TransferInitiated(
             _user,
@@ -85,12 +111,29 @@ contract Bridge is AccessControl {
         string memory _symbol,
         string memory _tokenName,
         address _to,
+        address _tokenAddress,
         uint256 _amount
-    ) external onlyAllowed {
+    )
+        external
+        onlyValidAddress(_to)
+        onlyValidAddress(_tokenAddress)
+        onlyValidAmount(_amount)
+        onlyAllowed
+    {
+        if (keccak256(bytes(_symbol)) == keccak256(bytes(""))) {
+            revert Bridge__TokenSymbolEmpty();
+        }
+
+        if (keccak256(bytes(_tokenName)) == keccak256(bytes(""))) {
+            revert Bridge__TokenNameEmpty();
+        }
+
         string memory tokenSymbol = string.concat("W", _symbol);
         address werc20 = factory.getWERC20(tokenSymbol);
         if (werc20 == address(0)) {
             werc20 = factory.createWERC20(_tokenName, tokenSymbol);
+            nativeToWrapped[_tokenAddress] = werc20;
+            wrappedToNative[werc20] = _tokenAddress;
         }
 
         factory.mint(tokenSymbol, _to, _amount);
@@ -105,12 +148,58 @@ contract Bridge is AccessControl {
         );
     }
 
-    function addRelayer(address _relayer) external onlyAllowed {
-        grantRole(RELAYER, _relayer);
+    function burnWrappedToken(
+        string memory _symbol,
+        uint256 _amount,
+        address _user
+    ) external onlyValidAmount(_amount) onlyValidAddress(_user) onlyAllowed {
+        if (keccak256(bytes(_symbol)) == keccak256(bytes(""))) {
+            revert Bridge__TokenSymbolEmpty();
+        }
+
+        uint256 userBalance = factory.balanceOf(_symbol, msg.sender);
+        if (userBalance < _amount) {
+            revert Bridge__InsufficientBalance();
+        }
+
+        address werc20 = factory.getWERC20(_symbol);
+        if (werc20 == address(0)) {
+            revert Bridge__WrapTokenDoesNotExist();
+        }
+
+        factory.burn(werc20, _user, _amount);
+
+        emit BurnedToken(_user, werc20, _amount, block.chainid);
     }
 
-    function removeRelayer(address _relayer) external onlyAllowed {
-        revokeRole(RELAYER, _relayer);
+    function unWrapToken(
+        address _to,
+        address _tokenAddress,
+        uint256 _amount
+    )
+        external
+        onlyValidAddress(_to)
+        onlyValidAddress(_tokenAddress)
+        onlyAllowed
+    {
+        address nativeToken = wrappedToNative[_tokenAddress];
+
+        if (nativeToken == address(0)) {
+            revert Bridge__WrapTokenDoesNotExist();
+        }
+
+        bool success = IERC20(nativeToken).transfer(_to, _amount);
+        if (!success) {
+            revert Bridge__UnwrappingFailed();
+        }
+
+        emit UwrappedToken(
+            _to,
+            nativeToken,
+            _tokenAddress,
+            _amount,
+            block.chainid
+        );
     }
 
     function withdrawToken(address _tokenAddress, address _to)

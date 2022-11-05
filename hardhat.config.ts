@@ -7,7 +7,6 @@ import "@nomiclabs/hardhat-etherscan";
 
 dotenv.config();
 
-
 const config: HardhatUserConfig = {
   networks: {
     localhost: {
@@ -27,6 +26,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       polygonMumbai: process.env.POLYSCAN || "",
+      goerli: "FBMMMGPZIX2M236ZS6F8HEV6188FEBUFSQ",
     },
   },
   solidity: {
