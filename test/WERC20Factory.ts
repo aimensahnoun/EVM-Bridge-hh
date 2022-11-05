@@ -15,5 +15,11 @@ describe("Testing Wrapper ERC20 Contract", function () {
     await factory.deployed();
   });
 
-
+  describe("Creating a new ERC20", function () {
+    it("Should revert if called by non-owner", async () => {
+      await expect(
+        factory.connect(accounts[1]).createWERC20("Aimen Snoun", "AIM")
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
 });
