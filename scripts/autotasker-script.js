@@ -675,7 +675,7 @@ exports.handler = async function (event) {
   let tx;
 
   if (type === "mint") {
-    tx = await contract.mintToken(symbol, tokenName, to, amount);
+    tx = await contract.mintToken(symbol, tokenName, to, tokenAddress ,amount);
 
     await tx.wait();
   } else {
