@@ -152,7 +152,7 @@ contract Bridge is AccessControl {
         string memory _symbol,
         uint256 _amount,
         address _user
-    ) external onlyValidAmount(_amount) onlyValidAddress(_user) onlyAllowed {
+    ) external onlyValidAmount(_amount) onlyValidAddress(_user)  {
         if (keccak256(bytes(_symbol)) == keccak256(bytes(""))) {
             revert Bridge__TokenSymbolEmpty();
         }
