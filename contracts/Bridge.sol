@@ -52,7 +52,6 @@ contract Bridge is AccessControl {
     event UwrappedToken(
         address indexed user,
         address nativeTokenAddress,
-        address werc20Address,
         uint256 amount,
         uint256 indexed chainId
     );
@@ -91,12 +90,11 @@ contract Bridge is AccessControl {
         onlyValidAddress(_tokenAddress)
         onlyValidAmount(_amount)
     {
-        bool result = IERC20(_tokenAddress).transferFrom(
+      IERC20(_tokenAddress).transferFrom(
             _user,
             address(this),
             _amount
         );
-        if (!result) revert Bridge__TransferToBridgeFailed();
 
         emit TransferInitiated(
             _user,
@@ -176,44 +174,25 @@ contract Bridge is AccessControl {
 
     function unWrapToken(
         address _to,
-        address _tokenAddress,
+        address _nativeTokenAddress,
         uint256 _amount
     )
         external
         onlyValidAddress(_to)
-        onlyValidAddress(_tokenAddress)
+        onlyValidAddress(_nativeTokenAddress)
         onlyValidAmount(_amount)
         onlyAllowed
     {
-        address nativeToken = wrappedToNative[_tokenAddress];
+        
 
-        if (nativeToken == address(0)) {
-            revert Bridge__WrapTokenDoesNotExist();
-        }
-
-        bool success = IERC20(nativeToken).transfer(_to, _amount);
-        if (!success) {
-            revert Bridge__UnwrappingFailed();
-        }
-
+        IERC20(_nativeTokenAddress).transfer(_to, _amount);
+    
         emit UwrappedToken(
             _to,
-            nativeToken,
-            _tokenAddress,
+            _nativeTokenAddress,
             _amount,
             block.chainid
         );
     }
 
-    function withdrawToken(address _tokenAddress, address _to)
-        external
-        onlyAllowed
-    {
-        IERC20(_tokenAddress).transfer(
-            _to,
-            IERC20(_tokenAddress).balanceOf(address(this))
-        );
-
-        emit WithdrawToken(_tokenAddress, _to);
-    }
 }
