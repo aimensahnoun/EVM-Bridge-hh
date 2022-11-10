@@ -722,7 +722,7 @@ function handler(event) {
                             }];
                     }
                     now = Math.floor(Date.now() / 1000);
-                    if (Math.abs(now - t) > 10) {
+                    if (Math.abs(now - t) > 4) {
                         return [2 /*return*/, {
                                 statusCode: 400,
                                 body: JSON.stringify({
