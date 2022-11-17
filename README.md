@@ -209,7 +209,7 @@ npm install
 
   
 
-yarn instal
+yarn install
 
 ```
 
