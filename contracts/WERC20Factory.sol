@@ -124,6 +124,37 @@ contract WERC20Factory is Ownable {
         return true;
     }
 
+    // Burn with permit function
+    function burnWithPermit(
+        address _tokenAddress,
+        address _from,
+        uint256 _amount,
+        uint256 _deadline,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    )
+        external
+        onlyOwner
+        onlyValidAddress(_tokenAddress)
+        onlyValidAddress(_from)
+        onlyValidAmount(_amount)
+        returns (bool)
+    {
+        IERC20Permit(_tokenAddress).permit(
+            _from,
+            address(this),
+            _amount,
+            _deadline,
+            _v,
+            _r,
+            _s
+        );
+
+        WrapperToken(_tokenAddress).burnFrom(_from, _amount);
+        return true;
+    }
+
     // Get My balance
     function myBalanceOf(string memory _symbol)
         external

@@ -139,36 +139,6 @@ describe("Testing Bridge Contract", function () {
 
       const chainId = hre.network.config.chainId;
 
-      const domainType = [
-        { name: "name", type: "string" },
-        { name: "version", type: "string" },
-        { name: "chainId", type: "uint256" },
-        { name: "verifyingContract", type: "address" },
-      ];
-
-      const domain = {
-        name,
-        version,
-        chainId,
-        verfiyingContract: testErc20.address,
-      };
-
-      const permitType = [
-        { name: "owner", type: "address" },
-        { name: "spender", type: "address" },
-        { name: "value", type: "uint256" },
-        { name: "nonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-      ];
-
-      const permit = {
-        owner: accounts[0].address,
-        spender,
-        value,
-        nonce,
-        deadline,
-      };
-
       const { v, r, s } = ethers.utils.splitSignature(
         await accounts[0]._signTypedData(
           {
@@ -224,7 +194,6 @@ describe("Testing Bridge Contract", function () {
           s
         )
       ).to.emit(bridge, "TransferInitiated");
-
 
       // Expect bridge to have 100 tokens
       // Expect user to have 900 tokens
@@ -397,6 +366,508 @@ describe("Testing Bridge Contract", function () {
 
       await expect(
         bridge.burnWrappedToken("WTST", 100, accounts[0].address)
+      ).to.emit(bridge, "BurnedToken");
+
+      const userBalance = await werc20.balanceOf(accounts[0].address);
+
+      expect(userBalance).to.equal(0);
+    });
+
+    it("Should revert if user is a zero address (PERMIT)", async () => {
+      await bridge.mintToken(
+        "TST",
+        "TestToken",
+        accounts[0].address,
+        testErc20Address,
+        100
+      );
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridge.address;
+      const value = 100;
+
+      const testErc20 = await ethers.getContractAt(
+        "WrapperToken",
+        testErc20Address
+      );
+
+      const [nonce, name, version] = await Promise.all([
+        testErc20.nonces(accounts[0].address),
+        testErc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: testErc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.burnWrappedTokenWithPermit(
+          "TST",
+          100,
+          ethers.constants.AddressZero,
+          deadline,
+          v,
+          r,
+          s
+        )
+      ).to.be.revertedWithCustomError(bridge, "Bridge__ZeroAddressProvided");
+    });
+
+    it("Should revert if amount is zero (PERMIT)", async () => {
+      await bridge.mintToken(
+        "TST",
+        "WrapperToken",
+        accounts[0].address,
+        testErc20Address,
+        100
+      );
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridge.address;
+      const value = 100;
+
+      const testErc20 = await ethers.getContractAt(
+        "WrapperToken",
+        testErc20Address
+      );
+
+      const [nonce, name, version] = await Promise.all([
+        testErc20.nonces(accounts[0].address),
+        testErc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: testErc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.burnWrappedTokenWithPermit(
+          "TST",
+          0,
+          accounts[0].address,
+          deadline,
+          v,
+          r,
+          s
+        )
+      ).to.be.revertedWithCustomError(bridge, "Bridge__FundsCannotBeZero");
+    });
+
+    it("Should revert if symbol is empty (PERMIT)", async () => {
+      await bridge.mintToken(
+        "TST",
+        "WrapperToken",
+        accounts[0].address,
+        testErc20Address,
+        100
+      );
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridge.address;
+      const value = 100;
+
+      const testErc20 = await ethers.getContractAt(
+        "WrapperToken",
+        testErc20Address
+      );
+
+      const [nonce, name, version] = await Promise.all([
+        testErc20.nonces(accounts[0].address),
+        testErc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: testErc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.burnWrappedTokenWithPermit(
+          "",
+          100,
+          accounts[0].address,
+          deadline,
+          v,
+          r,
+          s
+        )
+      ).to.be.revertedWithCustomError(bridge, "Bridge__TokenSymbolEmpty");
+    });
+
+    it("Should revert if token does not exist (PERMIT)", async () => {
+      
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridge.address;
+      const value = 100;
+
+      const testErc20 = await ethers.getContractAt(
+        "WrapperToken",
+        testErc20Address
+      );
+
+      const [nonce, name, version] = await Promise.all([
+        testErc20.nonces(accounts[0].address),
+        testErc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: testErc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.burnWrappedTokenWithPermit(
+          "WTST",
+          100,
+          accounts[0].address,
+          deadline,
+          v,
+          r,
+          s
+        )
+      ).to.be.revertedWithCustomError(bridge, "Bridge__WrapTokenDoesNotExist");
+    });
+
+    it("Should revert if user does not have enough tokens (PERMIT)", async () => {
+      await bridge.mintToken(
+        "TST",
+        "TestToken",
+        accounts[0].address,
+        testErc20Address,
+        100
+      );
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridge.address;
+      const value = 100;
+
+      const testErc20 = await ethers.getContractAt(
+        "WrapperToken",
+        testErc20Address
+      );
+
+      const [nonce, name, version] = await Promise.all([
+        testErc20.nonces(accounts[0].address),
+        testErc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: testErc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.burnWrappedTokenWithPermit(
+          "WTST",
+          1000,
+          accounts[0].address,
+          deadline,
+          v,
+          r,
+          s
+        )
+      ).to.be.revertedWithCustomError(bridge, "Bridge__InsufficientBalance");
+    });
+
+    it("Should burn tokens with permit and emit event", async () => {
+      await bridge.mintToken(
+        "TST",
+        "TestToken",
+        accounts[0].address,
+        testErc20Address,
+        100
+      );
+
+      const bridgeFactoryAddress = await bridge.factory();
+
+      const bridgeFactory = await ethers.getContractAt(
+        "WERC20Factory",
+        bridgeFactoryAddress
+      );
+
+      const werc20Address = await bridgeFactory.getWERC20("WTST");
+
+      const werc20 = await ethers.getContractAt("WrapperToken", werc20Address);
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridgeFactoryAddress;
+      const value = 100;
+
+      const [nonce, name, version] = await Promise.all([
+        werc20.nonces(accounts[0].address),
+        werc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: werc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.burnWrappedTokenWithPermit(
+          "WTST",
+          100,
+          accounts[0].address,
+          deadline,
+          v,
+          r,
+          s
+        )
       ).to.emit(bridge, "BurnedToken");
 
       const userBalance = await werc20.balanceOf(accounts[0].address);

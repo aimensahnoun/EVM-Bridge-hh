@@ -179,6 +179,34 @@ contract Bridge is AccessControl {
         );
     }
 
+    function burnWrappedTokenWithPermit(
+        string memory _symbol,
+        uint256 _amount,
+        address _user,
+        uint256 _deadline,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external onlyValidAmount(_amount) onlyValidAddress(_user) {
+        if (keccak256(bytes(_symbol)) == keccak256(bytes(""))) {
+            revert Bridge__TokenSymbolEmpty();
+        }
+
+        address werc20 = factory.getWERC20(_symbol);
+        if (werc20 == address(0)) {
+            revert Bridge__WrapTokenDoesNotExist();
+        }
+
+        uint256 userBalance = factory.balanceOf(_symbol, msg.sender);
+        if (userBalance < _amount) {
+            revert Bridge__InsufficientBalance();
+        }
+
+        factory.burnWithPermit(werc20, _user, _amount, _deadline, _v, _r, _s);
+
+        emit BurnedToken(_user, werc20, _amount, block.chainid);
+    }
+
     function burnWrappedToken(
         string memory _symbol,
         uint256 _amount,
