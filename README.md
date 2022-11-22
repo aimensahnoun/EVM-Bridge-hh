@@ -89,13 +89,32 @@ Method for getting the caller's balance for a certain ERC20.
 burn
 ```
 
-Method for getting the caller's balance for a certain ERC20.
+Method for burning a certain amount of token.
 
 | Parameter   | Type        | Description   |
 | :---        |    :----:   |:------------------------- |
 | `tokenAddress`   | `address`        | The address of a token to be burned     |
 | `from`   | `address`        | The address of the holder of tokens to be burned    |
 | `amount`   | uint256        | Amount of tokens to be burned     |
+
+```
+burnWithPermit
+```
+
+Method for burning a certain amount of token with permits.
+
+| Parameter   | Type        | Description   |
+| :---        |    :----:   |:------------------------- |
+| `tokenAddress`   | `address`        | The address of a token to be burned     |
+| `from`   | `address`        | The address of the holder of tokens to be burned    |
+| `amount`   | `uint256`        | Amount of tokens to be burned     |
+| `deadline`   | `uint256`        | Deadline for the permit     |
+| `v`   | `uint8`        | Signature element     |
+| `r`   | `byte32`        | Signature element     |
+| `s`   | `byte32`        | Signature element     |
+
+
+
 
 ### Bridge
 
@@ -118,6 +137,23 @@ This method is responsible for starting the transfer and locking the native toke
 | `tokenName`      | `string`       | The full length name of the token ex: AimBridge Token   |
 | `tokenSymbol`   | `string`        | The symbol for the token ex: AIM     |
 
+```
+initiateTransferWithPermit
+```
+
+This method is responsible for starting the transfer and locking the native token onto the source network bridge contract but implements permit to avoid using the approval method.
+
+| Parameter   | Type        | Description   |
+| :---        |    :----:   |:------------------------- |
+| `user`      | `address`       | The address of the user that initiated the transfer   |
+| `tokenAddress`   | `address`        | The address of the native token token that is being bridged     |
+| `targetChainId`   | `uint256`        | The ID of the network the token is being bridged to, ex: Goerli = 5| 
+| `amount`   | `uint256`        | The amount of the token being bridged    |
+| `tokenSymbol`   | `string`        | The symbol for the token ex: AIM     |
+| `deadline`   | `uint256`        | Deadline for the permit     |
+| `v`   | `uint8`        | Signature element     |
+| `r`   | `byte32`        | Signature element     |
+| `s`   | `byte32`        | Signature element     |
 
 ```
 mintToken
@@ -144,6 +180,22 @@ This method burns the user's wrapped tokens, in preperation for releasing the na
 | `symbol`   | `string`        | The symbol for the token ex: AIM     |
 | `amount`   | `uint256`        | The amount of the token being bridged    |
 | `user`      | `address`       | The address of the user that is burning the tokens   |
+
+```
+burnWrappedTokenWithPermit
+```
+
+This method burns the user's wrapped tokens, in preperation for releasing the native token on the original network but with Permits.
+
+| Parameter   | Type        | Description   |
+| :---        |    :----:   |:------------------------- |
+| `symbol`   | `string`        | The symbol for the token ex: AIM     |
+| `amount`   | `uint256`        | The amount of the token being bridged    |
+| `user`      | `address`       | The address of the user that is burning the tokens   |
+| `deadline`   | `uint256`        | Deadline for the permit     |
+| `v`   | `uint8`        | Signature element     |
+| `r`   | `byte32`        | Signature element     |
+| `s`   | `byte32`        | Signature element     |
 
 ```
 unWrapToken
