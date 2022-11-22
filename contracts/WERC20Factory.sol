@@ -103,7 +103,7 @@ contract WERC20Factory is Ownable {
     {
         address werc20 = getWERC20(_symbol);
         if (werc20 == address(0))
-            revert WERC20Factory__TokenDoesNotExist("WERC20");
+            revert WERC20Factory__TokenDoesNotExist(_symbol);
         return WrapperToken(werc20).balanceOf(_account);
     }
 
@@ -133,7 +133,7 @@ contract WERC20Factory is Ownable {
     {
         address werc20 = getWERC20(_symbol);
         if (werc20 == address(0))
-            revert WERC20Factory__TokenDoesNotExist("WERC20");
+            revert WERC20Factory__TokenDoesNotExist(_symbol);
 
         return WrapperToken(werc20).balanceOf(msg.sender);
     }

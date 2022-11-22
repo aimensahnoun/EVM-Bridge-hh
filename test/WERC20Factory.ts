@@ -4,7 +4,7 @@ import hre, { ethers } from "hardhat";
 
 import { ERC20, IERC20, WERC20Factory } from "../typechain";
 
-describe("Testing Wrapper ERC20 Contract", function () {
+describe("Testing ERC20 Factory Contract", function () {
   let factory: WERC20Factory;
   let accounts: SignerWithAddress[] = [];
   let testErc20: any;
@@ -123,6 +123,7 @@ describe("Testing Wrapper ERC20 Contract", function () {
     });
 
     it("should revert if checking my blance with empty string as a symbol", async () => {
+      
       await expect(factory.myBalanceOf("")).to.be.revertedWithCustomError(
         factory,
         "WERC20Factory__EmptySymbol"

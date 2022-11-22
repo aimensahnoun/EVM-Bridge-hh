@@ -116,6 +116,123 @@ describe("Testing Bridge Contract", function () {
         )
       ).to.emit(bridge, "TransferInitiated");
     });
+
+    it("Should transfer funds to bridge using permit and emit event", async () => {
+      // use signERC2612Permit to sign the permit
+      const testErc20 = await ethers.getContractAt(
+        "WrapperToken",
+        testErc20Address
+      );
+      await factory.mint("TST", accounts[0].address, 1000);
+
+      const deadline = ethers.constants.MaxUint256;
+
+      const spender = bridge.address;
+      const value = 100;
+
+      const [nonce, name, version] = await Promise.all([
+        testErc20.nonces(accounts[0].address),
+        testErc20.name(),
+        "1",
+        accounts[0].getChainId(),
+      ]);
+
+      const chainId = hre.network.config.chainId;
+
+      const domainType = [
+        { name: "name", type: "string" },
+        { name: "version", type: "string" },
+        { name: "chainId", type: "uint256" },
+        { name: "verifyingContract", type: "address" },
+      ];
+
+      const domain = {
+        name,
+        version,
+        chainId,
+        verfiyingContract: testErc20.address,
+      };
+
+      const permitType = [
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ];
+
+      const permit = {
+        owner: accounts[0].address,
+        spender,
+        value,
+        nonce,
+        deadline,
+      };
+
+      const { v, r, s } = ethers.utils.splitSignature(
+        await accounts[0]._signTypedData(
+          {
+            name,
+            version,
+            chainId,
+            verifyingContract: testErc20Address,
+          },
+          {
+            Permit: [
+              {
+                name: "owner",
+                type: "address",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "value",
+                type: "uint256",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+            ],
+          },
+          {
+            owner: accounts[0].address,
+            spender,
+            value,
+            nonce,
+            deadline,
+          }
+        )
+      );
+
+      await expect(
+        bridge.initiateTransferWithPermit(
+          accounts[0].address,
+          testErc20Address,
+          8001,
+          100,
+          "TST",
+          deadline,
+          v,
+          r,
+          s
+        )
+      ).to.emit(bridge, "TransferInitiated");
+
+
+      // Expect bridge to have 100 tokens
+      // Expect user to have 900 tokens
+
+      expect(await testErc20.balanceOf(bridge.address)).to.equal(100);
+
+      expect(await testErc20.balanceOf(accounts[0].address)).to.equal(900);
+    });
   });
 
   describe("Mint token", async () => {
@@ -155,7 +272,7 @@ describe("Testing Bridge Contract", function () {
       ).to.be.revertedWithCustomError(bridge, "Bridge__FundsCannotBeZero");
     });
 
-    it("Should revert if Symbol is an empty string" , async () => {
+    it("Should revert if Symbol is an empty string", async () => {
       await expect(
         bridge.mintToken(
           "",
@@ -165,19 +282,13 @@ describe("Testing Bridge Contract", function () {
           100
         )
       ).to.be.revertedWithCustomError(bridge, "Bridge__TokenSymbolEmpty");
-    })
+    });
 
-    it("Should revert if Name is an empty string" , async () => {
+    it("Should revert if Name is an empty string", async () => {
       await expect(
-        bridge.mintToken(
-          "TST",
-          "",
-          accounts[0].address,
-          testErc20Address,
-          100
-        )
+        bridge.mintToken("TST", "", accounts[0].address, testErc20Address, 100)
       ).to.be.revertedWithCustomError(bridge, "Bridge__TokenNameEmpty");
-    })
+    });
 
     it("Should revert if called by non-relayer", async () => {
       await expect(
@@ -346,7 +457,6 @@ describe("Testing Bridge Contract", function () {
         1000
       );
 
-
       const bridgeBalance = await testErc20.balanceOf(bridge.address);
       const userBalance = await testErc20.balanceOf(accounts[0].address);
 
@@ -354,7 +464,7 @@ describe("Testing Bridge Contract", function () {
 
       await expect(
         bridge.unWrapToken(accounts[0].address, testErc20Address, 100)
-      ).to.emit(bridge, "UwrappedToken");
+      ).to.emit(bridge, "UnWrappedToken");
 
       const bridgeBalanceAfter = await testErc20.balanceOf(bridge.address);
       const userBalanceAfter = await testErc20.balanceOf(accounts[0].address);

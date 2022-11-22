@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 contract WrapperToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     constructor(string memory _name, string memory _symbol)
         ERC20(_name, _symbol)
-        ERC20Permit(_symbol)
+        ERC20Permit(_name)
     {}
 
     function mint(address to, uint256 amount) public onlyOwner {
