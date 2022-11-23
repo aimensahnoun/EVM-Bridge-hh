@@ -134,8 +134,6 @@ This method is responsible for starting the transfer and locking the native toke
 | `tokenAddress`   | `address`        | The address of the native token token that is being bridged     |
 | `targetChainId`   | `uint256`        | The ID of the network the token is being bridged to, ex: Goerli = 5| 
 | `amount`   | `uint256`        | The amount of the token being bridged    |
-| `tokenName`      | `string`       | The full length name of the token ex: AimBridge Token   |
-| `tokenSymbol`   | `string`        | The symbol for the token ex: AIM     |
 
 ```
 initiateTransferWithPermit
@@ -149,7 +147,6 @@ This method is responsible for starting the transfer and locking the native toke
 | `tokenAddress`   | `address`        | The address of the native token token that is being bridged     |
 | `targetChainId`   | `uint256`        | The ID of the network the token is being bridged to, ex: Goerli = 5| 
 | `amount`   | `uint256`        | The amount of the token being bridged    |
-| `tokenSymbol`   | `string`        | The symbol for the token ex: AIM     |
 | `deadline`   | `uint256`        | Deadline for the permit     |
 | `v`   | `uint8`        | Signature element     |
 | `r`   | `byte32`        | Signature element     |
