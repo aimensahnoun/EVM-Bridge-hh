@@ -16,6 +16,7 @@ error Bridge__UnwrappingFailed();
 
 contract Bridge is AccessControl {
     WERC20Factory public factory;
+    uint public fee = 0.001 ether;
     bytes32 public constant RELAYER = keccak256("RELAYER");
 
     constructor() {
@@ -25,12 +26,12 @@ contract Bridge is AccessControl {
 
     event TransferInitiated(
         address indexed user,
-        address tokenAddress,
+        address indexed tokenAddress,
         uint256 sourceChainId,
         uint256 amount,
-        uint256 indexed targetChainId,
-        string indexed tokenSymbol,
-        string tokenName
+        uint256 fee,
+        uint256 timestamp,
+        uint256 indexed targetChainId
     );
 
     event TransferCompleted(
@@ -38,6 +39,7 @@ contract Bridge is AccessControl {
         address tokenAddress,
         uint256 amount,
         uint256 indexed chainId,
+        uint256 timestamp,
         string indexed tokenSymbol,
         string tokenName
     );
@@ -46,17 +48,26 @@ contract Bridge is AccessControl {
         address indexed user,
         address tokenAddress,
         uint256 amount,
-        uint256 indexed chainId
+        uint256 indexed chainId,
+        uint256 timestamp
     );
 
     event UnWrappedToken(
         address indexed user,
         address nativeTokenAddress,
         uint256 amount,
-        uint256 indexed chainId
+        uint256 indexed chainId,
+        uint256 timestamp
     );
 
     mapping(address => address) public wrappedToNative;
+
+    modifier onlyAdmin() {
+        if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert Bridge__NotAllowedToDoThisAction();
+        }
+        _;
+    }
 
     modifier onlyAllowed() {
         if (!hasRole(RELAYER, msg.sender))
@@ -79,7 +90,6 @@ contract Bridge is AccessControl {
         address _tokenAddress,
         uint256 _targetChainId,
         uint256 _amount,
-        string memory _tokenSymbol,
         uint256 _deadline,
         uint8 _v,
         bytes32 _r,
@@ -108,8 +118,8 @@ contract Bridge is AccessControl {
             block.chainid,
             _targetChainId,
             _amount,
-            _tokenSymbol,
-            _tokenSymbol
+            fee,
+            block.timestamp
         );
     }
 
@@ -117,9 +127,7 @@ contract Bridge is AccessControl {
         address _user,
         address _tokenAddress,
         uint256 _targetChainId,
-        uint256 _amount,
-        string memory _tokenName,
-        string memory _tokenSymbol
+        uint256 _amount
     )
         external
         onlyValidAddress(_user)
@@ -134,8 +142,8 @@ contract Bridge is AccessControl {
             block.chainid,
             _targetChainId,
             _amount,
-            _tokenSymbol,
-            _tokenName
+            fee,
+            block.timestamp
         );
     }
 
@@ -174,6 +182,7 @@ contract Bridge is AccessControl {
             werc20,
             _amount,
             block.chainid,
+            block.timestamp,
             tokenSymbol,
             _tokenName
         );
@@ -204,7 +213,13 @@ contract Bridge is AccessControl {
 
         factory.burnWithPermit(werc20, _user, _amount, _deadline, _v, _r, _s);
 
-        emit BurnedToken(_user, werc20, _amount, block.chainid);
+        emit BurnedToken(
+            _user,
+            werc20,
+            _amount,
+            block.chainid,
+            block.timestamp
+        );
     }
 
     function burnWrappedToken(
@@ -228,7 +243,13 @@ contract Bridge is AccessControl {
 
         factory.burn(werc20, _user, _amount);
 
-        emit BurnedToken(_user, werc20, _amount, block.chainid);
+        emit BurnedToken(
+            _user,
+            werc20,
+            _amount,
+            block.chainid,
+            block.timestamp
+        );
     }
 
     function unWrapToken(
@@ -244,6 +265,16 @@ contract Bridge is AccessControl {
     {
         IERC20(_nativeTokenAddress).transfer(_to, _amount);
 
-        emit UnWrappedToken(_to, _nativeTokenAddress, _amount, block.chainid);
+        emit UnWrappedToken(
+            _to,
+            _nativeTokenAddress,
+            _amount,
+            block.chainid,
+            block.timestamp
+        );
+    }
+
+    function setFee(uint256 _fee) external onlyAdmin {
+        fee = _fee;
     }
 }

@@ -210,6 +210,18 @@ This method releases native tokens on the original network
 | `amount`   | `uint256`        | The amount of the token being bridged    |
 
 
+```
+setFee
+```
+
+A method for the admin to change the bridge fee. defaults to 0.001 ETH.
+
+| Parameter   | Type        | Description   |
+| :---        |    :----:   |:------------------------- |
+| `fee`      | `uint256`       | The new fee amount for the bridge.   |
+
+
+
 
 
 

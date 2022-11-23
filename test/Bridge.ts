@@ -36,9 +36,7 @@ describe("Testing Bridge Contract", function () {
           ethers.constants.AddressZero,
           testErc20Address,
           5,
-          100,
-          "Token Name",
-          "Token Symbol"
+          100
         )
       ).to.be.revertedWithCustomError(bridge, "Bridge__ZeroAddressProvided");
     });
@@ -49,9 +47,7 @@ describe("Testing Bridge Contract", function () {
           accounts[0].address,
           ethers.constants.AddressZero,
           5,
-          100,
-          "Token Name",
-          "Token Symbol"
+          100
         )
       ).to.be.revertedWithCustomError(bridge, "Bridge__ZeroAddressProvided");
     });
@@ -66,14 +62,7 @@ describe("Testing Bridge Contract", function () {
       await testErc20.approve(bridge.address, 100);
 
       await expect(
-        bridge.initiateTransfer(
-          accounts[0].address,
-          testErc20Address,
-          5,
-          0,
-          "Token Name",
-          "Token Symbol"
-        )
+        bridge.initiateTransfer(accounts[0].address, testErc20Address, 5, 0)
       ).to.be.revertedWithCustomError(bridge, "Bridge__FundsCannotBeZero");
     });
 
@@ -85,14 +74,7 @@ describe("Testing Bridge Contract", function () {
       await factory.mint("TST", accounts[0].address, 1000);
 
       await expect(
-        bridge.initiateTransfer(
-          accounts[0].address,
-          testErc20Address,
-          5,
-          100,
-          "Token Name",
-          "Token Symbol"
-        )
+        bridge.initiateTransfer(accounts[0].address, testErc20Address, 5, 100)
       ).to.be.revertedWith("ERC20: insufficient allowance");
     });
 
@@ -110,9 +92,7 @@ describe("Testing Bridge Contract", function () {
           accounts[0].address,
           testErc20Address,
           8001,
-          100,
-          "TestToken",
-          "TST"
+          100
         )
       ).to.emit(bridge, "TransferInitiated");
     });
@@ -187,7 +167,6 @@ describe("Testing Bridge Contract", function () {
           testErc20Address,
           8001,
           100,
-          "TST",
           deadline,
           v,
           r,
@@ -623,8 +602,6 @@ describe("Testing Bridge Contract", function () {
     });
 
     it("Should revert if token does not exist (PERMIT)", async () => {
-      
-
       const deadline = ethers.constants.MaxUint256;
 
       const spender = bridge.address;
@@ -915,9 +892,7 @@ describe("Testing Bridge Contract", function () {
         accounts[0].address,
         testErc20Address,
         5,
-        1000,
-        "TST",
-        "TST"
+        1000
       );
 
       await bridge.mintToken(
@@ -944,6 +919,31 @@ describe("Testing Bridge Contract", function () {
         parseInt(bridgeBalance.toString()) - 100
       );
       expect(userBalanceAfter).to.equal(parseInt(userBalance.toString()) + 100);
+    });
+  });
+
+  describe("Manage fee", () => {
+    it("should be able to get the fee", async () => {
+      const fee = await bridge.fee();
+
+      expect(fee).to.not.equal(0);
+    });
+
+    it("should revert if not admin tries to set fee", async () => {
+      await expect(
+        bridge.connect(accounts[1]).setFee(100)
+      ).to.be.revertedWithCustomError(
+        bridge,
+        "Bridge__NotAllowedToDoThisAction"
+      );
+    });
+
+    it("should be able to set fee", async () => {
+      await bridge.setFee(100);
+
+      const fee = await bridge.fee();
+
+      expect(fee).to.equal(100);
     });
   });
 });
