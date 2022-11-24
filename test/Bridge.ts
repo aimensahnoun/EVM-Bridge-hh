@@ -264,7 +264,7 @@ describe("Testing Bridge Contract", function () {
           testErc20Address,
           100
         )
-      ).to.emit(bridge, "TransferCompleted");
+      ).to.emit(bridge, "TokenMinted");
 
       const bridgeFactoryAddress = await bridge.factory();
 
