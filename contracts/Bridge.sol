@@ -34,7 +34,7 @@ contract Bridge is AccessControl {
         uint256 indexed targetChainId
     );
 
-    event TransferCompleted(
+    event TokenMinted(
         address indexed user,
         address tokenAddress,
         uint256 amount,
@@ -59,6 +59,8 @@ contract Bridge is AccessControl {
         uint256 indexed chainId,
         uint256 timestamp
     );
+
+    event FeeUpdated(uint256 fee);
 
     mapping(address => address) public wrappedToNative;
 
@@ -116,10 +118,10 @@ contract Bridge is AccessControl {
             _user,
             _tokenAddress,
             block.chainid,
-            _targetChainId,
             _amount,
             fee,
-            block.timestamp
+            block.timestamp,
+            _targetChainId
         );
     }
 
@@ -140,10 +142,10 @@ contract Bridge is AccessControl {
             _user,
             _tokenAddress,
             block.chainid,
-            _targetChainId,
             _amount,
             fee,
-            block.timestamp
+            block.timestamp,
+            _targetChainId
         );
     }
 
@@ -177,7 +179,7 @@ contract Bridge is AccessControl {
 
         factory.mint(tokenSymbol, _to, _amount);
 
-        emit TransferCompleted(
+        emit TokenMinted(
             _to,
             werc20,
             _amount,
@@ -276,5 +278,6 @@ contract Bridge is AccessControl {
 
     function setFee(uint256 _fee) external onlyAdmin {
         fee = _fee;
+        emit FeeUpdated(_fee);
     }
 }
